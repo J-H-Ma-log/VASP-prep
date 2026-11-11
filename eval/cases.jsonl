@@ -1,0 +1,50 @@
+{"id": 1, "text": "扩成 2x2x1", "ops": ["supercell"]}
+{"id": 2, "text": "扩成 3x3x3", "ops": ["supercell"]}
+{"id": 3, "text": "2x2x2 超胞", "ops": ["supercell"]}
+{"id": 4, "text": "所有 Cu 换成 Ni", "ops": ["substitute_all"]}
+{"id": 5, "text": "把所有Cu原子换成Ni", "ops": ["substitute_all"]}
+{"id": 6, "text": "第 3 个原子换成 Co", "ops": ["substitute"]}
+{"id": 7, "text": "删除第 5 个原子", "ops": ["vacancy"]}
+{"id": 8, "text": "去掉第2个原子", "ops": ["vacancy"]}
+{"id": 9, "text": "真空层 15 埃", "ops": ["vacuum"]}
+{"id": 10, "text": "真空 20 Å", "ops": ["vacuum"]}
+{"id": 11, "text": "截断能 520", "incar": {"ENCUT": 520}}
+{"id": 12, "text": "ENCUT 调到 600", "incar": {"ENCUT": 600}}
+{"id": 13, "text": "K 点 4x4x1", "kpoints": [4, 4, 1]}
+{"id": 14, "text": "k网格 6x6x6", "kpoints": [6, 6, 6]}
+{"id": 15, "text": "拉伸 2%", "ops": ["strain"]}
+{"id": 16, "text": "应变 1.5%", "ops": ["strain"]}
+{"id": 17, "text": "静态计算", "calc": "static"}
+{"id": 18, "text": "结构优化", "calc": "relax"}
+{"id": 19, "text": "能带计算", "calc": "band"}
+{"id": 20, "text": "自旋极化", "incar": {"ISPIN": 2}}
+{"id": 21, "text": "磁矩 2.0", "incar": {"MAGMOM": 2.0}}
+{"id": 22, "text": "SIGMA 0.05", "incar": {"SIGMA": 0.05}}
+{"id": 23, "text": "扩成2x2x2，第2个原子换成Ni", "ops": ["supercell", "substitute"]}
+{"id": 24, "text": "切 Pt(111) 表面", "needs_human": true}
+{"id": 25, "text": "固定下面两层", "needs_human": true}
+{"id": 26, "text": "DFT+U 计算", "needs_human": true}
+{"id": 27, "text": "用 PBE 赝势", "needs_human": true}
+{"id": 28, "text": "做 ENCUT 收敛测试", "needs_human": true}
+{"id": 29, "text": "反铁磁构型", "needs_human": true}
+{"id": 30, "text": "转成原胞", "needs_human": true}
+{"id": 31, "text": "把第 1 个原子换成 Fe，扩成 2x2x1，截断能 450，K点 3x3x3", "ops": ["substitute", "supercell"], "incar": {"ENCUT": 450}, "kpoints": [3, 3, 3]}
+{"id": 32, "text": "加真空层 10 Å，扩成 2x1x1", "ops": ["vacuum", "supercell"]}
+{"id": 33, "text": "删掉第4个原子，静态计算，ENCUT 500", "ops": ["vacancy"], "calc": "static", "incar": {"ENCUT": 500}}
+{"id": 34, "text": "所有 O 换成 S", "ops": ["substitute_all"]}
+{"id": 35, "text": "第 2 个原子改成 N", "ops": ["substitute"]}
+{"id": 36, "text": "扩成 4x4x1，真空 18", "ops": ["supercell", "vacuum"]}
+{"id": 37, "text": "拉伸 3%，K 点 2x2x2", "ops": ["strain"], "kpoints": [2, 2, 2]}
+{"id": 38, "text": "单点能计算", "calc": "static"}
+{"id": 39, "text": "自洽计算，截断能 480", "calc": "static", "incar": {"ENCUT": 480}}
+{"id": 40, "text": "磁矩 1.5，自旋极化，扩成 2x2x2", "incar": {"MAGMOM": 1.5, "ISPIN": 2}, "ops": ["supercell"]}
+{"id": 41, "text": "sigma=0.1", "incar": {"SIGMA": 0.1}}
+{"id": 42, "text": "真空层厚度 12 Å", "ops": ["vacuum"]}
+{"id": 43, "text": "把第 1 个原子换成 Au", "ops": ["substitute"]}
+{"id": 44, "text": "扩成 1x1x3", "ops": ["supercell"]}
+{"id": 45, "text": "删掉第三个原子", "needs_human": false, "ops": [], "note": "中文数字，规则不认，允许 0 命中"}
+{"id": 46, "text": "算一下高对称路径的能带", "calc": "band"}
+{"id": 47, "text": "结构优化，ENCUT 550，K 点 4x4x4", "calc": "relax", "incar": {"ENCUT": 550}, "kpoints": [4, 4, 4]}
+{"id": 48, "text": "静态计算，SIGMA 0.05", "calc": "static", "incar": {"SIGMA": 0.05}}
+{"id": 49, "text": "所有 H 换成 F", "ops": ["substitute_all"]}
+{"id": 50, "text": "切表面，用 3 层", "needs_human": true}

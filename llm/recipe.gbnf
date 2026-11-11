@@ -1,0 +1,26 @@
+# GBNF 语法：约束本地模型只能输出"合法 JSON"
+#
+# 为什么需要它：
+#   7B 级模型在自由生成时最常见的错误是——少引号、多逗号、用中文引号、
+#   在 JSON 前后加解释文字。这些在语法层就消灭掉，比事后正则抠 JSON 可靠得多。
+#
+# 用法（llama.cpp）：
+#   llama-cli -m model.gguf -f prompt.txt --grammar-file llm/recipe.gbnf \
+#             --temp 0 -n 800 --no-display-prompt
+#
+# 说明：这是"通用 JSON"语法（不强制具体字段），字段级约束由 prompt_zh.txt
+#       里的白名单 + prep.py 的配方校验共同保证。两层都过，才允许写文件。
+
+root   ::= ws value ws
+value  ::= object | array | string | number | "true" | "false" | "null"
+object ::= "{" ws (pair (ws "," ws pair)*)? ws "}"
+pair   ::= string ws ":" ws value
+array  ::= "[" ws (value (ws "," ws value)*)? ws "]"
+string ::= "\"" char* "\""
+char   ::= [^"\\\x00-\x1f] | "\\" escape
+escape ::= ["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
+number ::= "-"? int frac? exp?
+int    ::= "0" | [1-9] [0-9]*
+frac   ::= "." [0-9]+
+exp    ::= [eE] [+-]? [0-9]+
+ws     ::= [ \t\n\r]*

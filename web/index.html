@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VASP 前处理</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #262b36; --text: #d8dee9;
+    --dim: #8a93a5; --accent: #4da3ff; --ok: #45c97a; --warn: #e6b450; --err: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.55 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line);
+           display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--dim); }
+  .badge.on { color: var(--ok); border-color: #23553a; }
+  .badge.off { color: var(--warn); border-color: #5a4a1f; }
+  main { display: grid; grid-template-columns: 400px 1fr; gap: 14px; padding: 14px; align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .card h2 { font-size: 13px; margin: 0 0 10px; color: var(--dim); font-weight: 600; letter-spacing: .03em; }
+  label { display: block; font-size: 12px; color: var(--dim); margin: 10px 0 4px; }
+  input[type=text], textarea { width: 100%; background: #0c0e12; color: var(--text);
+      border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; font: inherit; }
+  textarea { min-height: 96px; resize: vertical; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  /* 输入框 + 「选择…」按钮并排；输入框占满剩余宽度 */
+  .picker { display: flex; gap: 8px; align-items: center; }
+  .picker input { flex: 1; }
+  .picker button { white-space: nowrap; }
+  button { background: #1d2430; color: var(--text); border: 1px solid var(--line);
+           border-radius: 7px; padding: 8px 14px; font: inherit; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--accent); color: #fff; }
+  button.primary { background: #1b4f86; border-color: #2a6fb8; }
+  button.ok { background: #1d5a3a; border-color: #2c7f54; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .hint { font-size: 12px; color: var(--dim); margin-top: 6px; }
+  .timeline { max-height: 260px; overflow: auto; font: 12.5px/1.6 Consolas, monospace; }
+  .timeline div { padding: 1px 0; white-space: pre-wrap; }
+  .lv-step { color: var(--accent); } .lv-ok { color: var(--ok); }
+  .lv-warn { color: var(--warn); } .lv-err { color: var(--err); } .lv-info { color: var(--dim); }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--dim); font-weight: 500; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .tabs button { padding: 4px 10px; font-size: 12.5px; }
+  .tabs button.active { border-color: var(--accent); color: #fff; }
+  pre.diff { margin: 0; background: #0c0e12; border: 1px solid var(--line); border-radius: 8px;
+             padding: 10px; overflow: auto; max-height: 340px; font: 12px/1.5 Consolas, monospace; }
+  .add { color: var(--ok); } .del { color: var(--err); } .meta { color: var(--dim); }
+  #error { display: none; margin: 0 14px; padding: 10px 12px; border-radius: 8px;
+           background: #3a1d1d; border: 1px solid #6b2a2a; color: #ffb3b3; white-space: pre-wrap; }
+  .kv { display: grid; grid-template-columns: 96px 1fr; gap: 4px 10px; font-size: 12.5px; }
+  .kv b { color: var(--dim); font-weight: 500; }
+  /* 页签与人看的目录按钮 */
+  nav.pageTabs { display: flex; gap: 6px; margin: 0 14px 10px; }
+  nav.pageTabs button { background: #1b1f27; color: var(--dim); border: 1px solid var(--line);
+                        padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  nav.pageTabs button.active { color: #fff; background: #2b3a55; border-color: #3d5f8f; }
+  .openbar { display: flex; gap: 6px; margin: 0 14px 8px; flex-wrap: wrap; }
+  .openbar button { background: #1b1f27; color: var(--dim); border: 1px dashed var(--line);
+                    padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  table.batch { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.batch th, table.batch td { border-bottom: 1px solid var(--line); padding: 6px 8px;
+                                   text-align: left; vertical-align: top; }
+  table.batch th { color: var(--dim); font-weight: 500; }
+  tr.st-ok td { color: #cfe8cf; } tr.st-error td { color: #ffb3b3; }
+  tr.st-skip td { color: var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>VASP 前处理</h1>
+  <span id="modelBadge" class="badge">正在检测模型…</span>
+  <span id="modeBadge" class="badge">检测运行模式…</span>
+  <span class="badge">只监听本机 127.0.0.1</span>
+
+</header>
+
+<div id="error"></div>
+
+<nav class="pageTabs" id="pageTabs">
+  <button class="active" data-page="single">单文件</button>
+  <button data-page="batch">批量</button>
+  <button data-page="db">数据库</button>
+</nav>
+<div class="openbar">
+  <button data-open="runs">查看 runs</button>
+  <button data-open="batches">查看 batches</button>
+  <button data-open="materials">查看 materials</button>
+  <button data-open="imports">查看 imports</button>
+  <span id="openInfo" class="hint" style="margin-left:6px"></span>
+</div>
+<div id="dirPanel" class="card" hidden style="margin:0 14px 10px"></div>
+
+<main>
+<div id="page-single">
+  <section class="card">
+    <h2>1. 选目录，写需求</h2>
+
+    <label>源目录（含 POSCAR 的文件夹）</label>
+    <div class="picker">
+      <input id="source" type="text" placeholder="点右边「选择…」用资源管理器挑">
+      <button id="btnPickSource" type="button">选择…</button>
+    </div>
+    <div class="hint">也可以直接粘贴路径。选完会自动读结构摘要（几原子、什么元素）。</div>
+
+    <label>输出名称（结果写到 runs\ 下这个文件夹）</label>
+    <div class="picker">
+      <input id="outName" type="text" placeholder="留空 = 源目录名_out，例如 MoS2_out；可自己起名，如 mos2_d3bj_2x2x1">
+    </div>
+    <div class="hint">结果固定写到 <code>vasp-prep-v2\runs\&lt;名称&gt;\</code>；同名会自动加 <code>_2</code>，不会覆盖旧结果；源目录本身永不被改。</div>
+
+    <label>需求（一句话）</label>
+    <textarea id="text" placeholder="例：扩成 2x2x1，第 3 个原子换成 Co，ENCUT 调到 520"></textarea>
+    <div class="hint">支持：扩胞、替换、空位、加原子、真空层、固定层、应变、切表面、吸附质、ENCUT/K 点/预设。</div>
+
+    <div class="row">
+      <button id="btnPreview" class="primary">预览（不写文件）</button>
+      <button id="btnWrite" class="ok" disabled>写入输出目录</button>
+    </div>
+    <div class="hint" id="statusLine">先点“预览”，看懂了、diff 没问题，再点“写入”。</div>
+  </section>
+
+  <section style="display:grid; gap:14px;">
+    <div class="card">
+      <h2>2. 过程（程序在做什么）</h2>
+      <div id="timeline" class="timeline"><div class="meta">等待预览…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>3. 预览结果</h2>
+      <div id="summary" class="kv"><span class="meta">还没有预览结果。</span></div>
+    </div>
+
+    <div class="card">
+      <h2>4. 最终 diff（源文件 → 新文件）</h2>
+      <div id="tabs" class="tabs"></div>
+      <pre id="diff" class="diff meta">（预览后在这里显示 diff）</pre>
+    </div>
+  </section>
+</div><!-- /page-single -->
+
+<div id="page-batch" hidden>
+  <section class="card">
+    <h2>批量 1. 选根目录，写需求</h2>
+    <label>批量根目录（它下面的每个子文件夹里各有一个 POSCAR）</label>
+    <div class="picker">
+      <input id="bRoot" type="text" placeholder="例如 D:\vasp_models；选完点「扫描材料」">
+      <button id="btnPickBatchRoot" type="button">选择…</button>
+      <button id="btnScan" type="button">扫描材料</button>
+    </div>
+    <div class="hint" id="scanLine">还没扫描。扫描只读文件，不改任何东西。</div>
+
+    <label>需求（同一句话套到每个材料上）</label>
+    <textarea id="bText" placeholder="例：扩成 2x2x1，加 DFT-D3(BJ)"></textarea>
+    <div class="hint">批量里“第 3 个原子”这类序号只对原子数够的材料成立；不够的材料会标红、不硬猜。</div>
+
+    <label>批次名称（留空 = batch_日期_关键词）</label>
+    <input id="bName" type="text" placeholder="例如 2026_mos2_ivdw_sweep">
+
+    <label>参数扫描：IVDW（逗号分隔；留空 = 不扫描，只跑一遍）</label>
+    <input id="bIvdw" type="text" placeholder="例如 0,11,12">
+
+    <div class="row">
+      <button id="btnBatchPreview" class="primary">预览（不写文件）</button>
+      <button id="btnBatchWrite" class="ok" disabled>全部写入</button>
+    </div>
+    <div class="hint" id="bStatusLine">先扫描 → 预览，确认每个材料的“将要生成”路径与改动，再点“全部写入”。</div>
+  </section>
+
+  <section class="card">
+    <h2>批量 2. 过程（程序在做什么）</h2>
+    <div id="bTimeline" class="timeline"><div class="meta">等待预览…</div></div>
+  </section>
+
+  <section class="card">
+    <h2>批量 3. 将要生成 / 结果</h2>
+    <div id="bTable"><span class="meta">预览后在这里逐项列出。</span></div>
+  </section>
+</div><!-- /page-batch -->
+
+<div id="page-db" hidden>
+  <section class="card">
+    <h2>数据库 1. 按化学式检索</h2>
+    <div class="picker">
+      <select id="dbProvider">
+        <option value="mp">Materials Project（免 key）</option>
+        <option value="oqmd">OQMD（免 key）</option>
+        <option value="aflow">AFLOW（给链接）</option>
+        <option value="2dmatpedia">2Dmatpedia（整库缓存）</option>
+      </select>
+      <input id="dbFormula" type="text" placeholder="化学式，例如 MoS2、Bi2O3">
+      <button id="btnDbSearch" class="primary" type="button">检索</button>
+    </div>
+    <div class="hint" id="dbHint">检索只读网络，不写文件。下载会放到 <code>materials\</code>，下载目录可直接当批量根目录。</div>
+  </section>
+
+  <section class="card">
+    <h2>数据库 2. 结果</h2>
+    <div id="dbResults"><span class="meta">还没有检索。</span></div>
+  </section>
+
+  <section class="card">
+    <h2>数据库 3. 导入本地文件（ICSD / Materials Cloud / 中科院库导出）</h2>
+    <div class="picker">
+      <input id="dbImportPath" type="text" placeholder="CIF / POSCAR / zip 文件，或一个文件夹">
+      <button id="btnPickImport" type="button">选择文件夹…</button>
+      <button id="btnDbImport" class="ok" type="button">导入</button>
+    </div>
+    <div class="hint">CIF 需要本机有 pymatgen（chgnet_env 里已有）；导入结果同样在 <code>materials\</code>。</div>
+    <div class="hint" id="dbImportHint"></div>
+  </section>
+</div>
+</main>
+
+<script>
+let currentJob = null;
+
+const $ = (id) => document.getElementById(id);
+
+function showError(msg) {
+  const box = $("error");
+  if (!msg) { box.style.display = "none"; box.textContent = ""; return; }
+  box.style.display = "block";
+  box.textContent = msg;
+}
+
+async function api(path, opts) {
+  const resp = await fetch(path, Object.assign({headers: {"Content-Type": "application/json"}}, opts));
+  const data = await resp.json().catch(() => ({ok: false, error: "服务器返回的不是 JSON"}));
+  if (!resp.ok || !data.ok) throw new Error(data.error || ("HTTP " + resp.status));
+  return data;
+}
+
+async function refreshStatus() {
+  try {
+    const d = await api("/api/status");
+    const m = d.model;
+    const badge = $("modelBadge");
+    if (m.available) {
+      badge.className = "badge on";
+      badge.textContent = "模型：" + d.config.llm.model + " 在线（" + m.elapsed_ms + " ms）";
+    } else {
+      badge.className = "badge off";
+      badge.textContent = "模型离线 → 规则模式（" + m.reason + "）";
+    }
+    if (d.config.paths.default_source) $("source").value = $("source").value || d.config.paths.default_source;
+    // 运行模式：受限（只能写 runs/）时提示怎么解除
+    const rm = (d.runtime && d.runtime.run_mode) || null;
+    const mb = $("modeBadge");
+    if (rm) {
+      if (rm.mode === "restricted") {
+        mb.className = "badge off";
+        mb.textContent = "受限环境：只写 runs\\（不影响使用）";
+        mb.title = "当前进程被降权（完整性级别 " + (rm.integrity || "?") + "），只能写程序目录。结果一样能生成，只是不能自定义位置。";
+      } else {
+        mb.className = "badge on";
+        mb.textContent = "普通模式（完整性级别 " + (rm.integrity || "?") + "）";
+        mb.title = "输出仍固定写到 runs\\，但程序有完整权限，便于后续扩展。";
+      }
+    }
+  } catch (e) {
+    $("modelBadge").className = "badge off";
+    $("modelBadge").textContent = "模型状态未知：" + e.message;
+  }
+}
+
+function renderLogs(logs) {
+  const box = $("timeline");
+  box.innerHTML = "";
+  (logs || []).forEach(l => {
+    const div = document.createElement("div");
+    div.className = "lv-" + l.level;
+    div.textContent = l.t + "  " + l.msg;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderSummary(job) {
+  const s = job.summary || {};
+  const st = s.structure || {};
+  const natoms = st.natoms || ["?", "?"];
+  const vol = st.volume || ["?", "?"];
+  const rows = [
+    ["原子数", natoms[0] + " → " + natoms[1]],
+    ["体积", vol[0] + " → " + vol[1] + " Å³"],
+    ["元素", (st.species || []).join(" ")],
+    ["输出文件夹", job.output],
+  ];
+  let html = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join("");
+  const changes = s.incar_changes || [];
+  if (changes.length) {
+    html += `<b>INCAR</b><span>${changes.length} 个键有变化</span>`;
+  }
+  $("summary").innerHTML = html;
+
+  // INCAR 变更表
+  if (changes.length) {
+    let t = "<table><tr><th>键</th><th>旧值</th><th>新值</th></tr>";
+    changes.forEach(c => { t += `<tr><td>${c.key}</td><td>${c.old}</td><td>${c.new}</td></tr>`; });
+    t += "</table>";
+    $("summary").innerHTML += t;
+  }
+}
+
+function renderDiffs(job) {
+  const diffs = job.diffs || {};
+  const tabs = $("tabs"), pre = $("diff");
+  tabs.innerHTML = "";
+  const names = Object.keys(diffs);
+  if (!names.length) {
+    pre.className = "diff meta";
+    pre.textContent = "（没有文件差异：结构/参数没有变化）";
+    return;
+  }
+  names.forEach((name, i) => {
+    const b = document.createElement("button");
+    b.textContent = name;
+    if (i === 0) b.className = "active";
+    b.onclick = () => {
+      [...tabs.children].forEach(x => x.className = "");
+      b.className = "active";
+      showDiff(name);
+    };
+    tabs.appendChild(b);
+  });
+  function showDiff(name) {
+    const lines = (diffs[name] || "").split("\n").map(line => {
+      const esc = line.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      if (line.startsWith("+++") || line.startsWith("---")) return `<span class="meta">${esc}</span>`;
+      if (line.startsWith("+")) return `<span class="add">${esc}</span>`;
+      if (line.startsWith("-")) return `<span class="del">${esc}</span>`;
+      return esc;
+    });
+    pre.className = "diff";
+    pre.innerHTML = lines.join("\n");
+  }
+  showDiff(names[0]);
+}
+
+$("btnPreview").onclick = async () => {
+  showError("");
+  const source = $("source").value.trim();
+  const name = $("outName").value.trim();
+  const text = $("text").value.trim();
+  if (!source) { showError("请先填源目录。"); return; }
+  if (!text) { showError("请先写一句需求。"); return; }
+  const btn = $("btnPreview");
+  btn.disabled = true; $("btnWrite").disabled = true;
+  $("statusLine").textContent = "正在预览（读文件 → 理解 → 试算）…";
+  try {
+    const d = await api("/api/preview", {method: "POST", body: JSON.stringify({source, name, text})});
+    currentJob = d.job;
+    renderLogs(currentJob.logs);
+    renderSummary(currentJob);
+    renderDiffs(currentJob);
+    const ok = (currentJob.summary || {}).ok !== false;
+    $("btnWrite").disabled = !ok;
+    $("statusLine").textContent = ok ? "预览完成。确认 diff 无误后点“写入输出目录”。"
+                                     : "预览有 ERROR，已禁止写入（先改需求或源文件）。";
+  } catch (e) {
+    showError("预览失败：\n" + e.message);
+    $("statusLine").textContent = "预览失败。";
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+$("btnWrite").onclick = async () => {
+  if (!currentJob) return;
+  showError("");
+  const btn = $("btnWrite");
+  btn.disabled = true;
+  $("statusLine").textContent = "正在写入…";
+  try {
+    const d = await api("/api/write", {method: "POST",
+      body: JSON.stringify({job_id: currentJob.id, confirm: true})});
+    currentJob = d.job;
+    renderLogs(currentJob.logs);
+    renderSummary(currentJob);
+    $("statusLine").textContent = "已写入：" + currentJob.output + "（" + (currentJob.files || []).join("、") + "）可去 runs\\ 下取";
+  } catch (e) {
+    showError("写入失败：\n" + e.message);
+    $("statusLine").textContent = "写入失败，输出目录未改动。";
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ---- 用系统资源管理器选文件夹 ----
+// 浏览器拿不到文件夹绝对路径（安全限制），所以点按钮 → 后端弹原生对话框 → 返回路径。
+// 选输出目录时，返回的是"父文件夹"，这里自动拼一个子目录名，避免"写入到已存在目录"被拒绝。
+async function pickDir(kind) {
+  const btn = $("btnPickSource");
+  const input = $("source");
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "选择中…";
+  $("statusLine").textContent = "已弹出选择窗口，选完回到这里…";
+  try {
+    const q = "?kind=" + encodeURIComponent(kind) +
+              "&initial=" + encodeURIComponent(input.value.trim() || "");
+    const d = await api("/api/browse" + q);
+    if (d.cancelled || !d.path) {
+      $("statusLine").textContent = "已取消选择。";
+      return;
+    }
+    if (kind === "source") {
+      input.value = d.path;
+      $("statusLine").textContent = "已选源目录。填写需求后点「预览」。";
+    } else {
+      const base = ($("source").value.trim().split(/[\\/]/).filter(Boolean).pop()) || "edit";
+      input.value = d.path.replace(/[\\/]+$/, "") + "/" + base + "_out";
+      $("statusLine").textContent = "已选输出位置（子目录名可改）。";
+    }
+  } catch (e) {
+    showError("选择文件夹失败：\n" + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
+$("btnPickSource").onclick = () => pickDir("source");
+
+
+// ---- 页签：单文件 / 批量 / 数据库 ----
+// 【为什么用页签而不是三个窗口】浏览器里来回切窗口容易把“这是哪个页面”搞混；
+// 页签只隐藏 DOM，状态都还在，切回来不用重填。
+document.querySelectorAll("#pageTabs button").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll("#pageTabs button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const page = btn.dataset.page;
+    $("page-single").hidden = page !== "single";
+    $("page-batch").hidden = page !== "batch";
+    $("page-db").hidden = page !== "db";
+  };
+});
+
+// ---- 打开“人该看的目录”（后端调资源管理器，浏览器做不到） ----
+document.querySelectorAll(".openbar button").forEach((btn) => {
+  btn.onclick = async () => {
+    const kind = btn.dataset.open;
+    btn.disabled = true;
+    try {
+      const d = await api("/api/open?kind=" + encodeURIComponent(kind));
+      if (d.opened) {
+        $("openInfo").textContent = "已打开：" + d.path;
+        $("dirPanel").hidden = true;
+      } else {
+        // 受限进程不允许启动 explorer：改为在网页里列出目录（能看、能点进去），并复制路径备用
+        $("openInfo").textContent = "不能自动打开，已改为在网页里显示（路径已复制）";
+        try { await navigator.clipboard.writeText(d.path); } catch (_) { /* 剪贴板不可用就只显示 */ }
+        showDir(d.path);
+      }
+    } catch (e) {
+      showError("打开目录失败：\n" + e.message);
+      $("openInfo").textContent = "";
+    } finally {
+      btn.disabled = false;
+    }
+  };
+});
+
+// ---- 批量处理 ----
+let batchResult = null;  // 保留预览结果，写入时只传 id
+
+function renderBatchLogs(logs) {
+  const box = $("bTimeline");
+  if (!logs || !logs.length) { box.innerHTML = '<div class="meta">等待预览…</div>'; return; }
+  box.innerHTML = "";
+  logs.forEach((l) => {
+    const div = document.createElement("div");
+    const cls = { ok: "add", warn: "warn", err: "del", step: "step" }[l.level] || "meta";
+    div.className = cls;
+    div.textContent = `[${l.t}] ${l.msg}`;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderBatchTable(b) {
+  batchResult = b;
+  const rows = (b.items || []).map((it) => {
+    const st = { ok: "st-ok", written: "st-ok", error: "st-error", skip: "st-skip" }[it.status] || "";
+    const name = it.param_dir ? it.material + " / " + it.param_dir : it.material;
+    const detail = [it.ops.join("；"), it.incar_changes.join("；"), it.issue].filter(Boolean).join(" · ");
+    return `<tr class="${st}"><td>${name}</td><td>${it.natoms ?? ""} → ${it.natoms_after ?? ""}</td>` +
+           `<td>${it.target}</td><td>${detail}</td></tr>`;
+  }).join("");
+  $("bTable").innerHTML =
+    `<div class="hint">批次目录：<code>${b.batch_dir}</code>；共 ${b.n_total} 项，可写 ${b.n_ok} 项` +
+    (b.written != null ? `；已写入 ${b.written}，跳过 ${b.skipped}，失败 ${b.failed}` : "；这是预览，还没有写文件") +
+    `</div><table class="batch"><thead><tr><th>材料 / 参数</th><th>原子数</th>` +
+    `<th>将要生成</th><th>操作与改动</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function batchScan() {
+  const root = $("bRoot").value.trim();
+  if (!root) { showError("请先填批量根目录"); return; }
+  showError("");
+  $("scanLine").textContent = "扫描中…";
+  try {
+    const d = await api("/api/batch/scan?root=" + encodeURIComponent(root));
+    const s = d.scan;
+    const names = s.materials.map((m) => m.ok ? `${m.name}(${m.natoms})` : `${m.name}(读不了)`).join("、");
+    $("scanLine").textContent = `找到 ${s.n_found} 个材料，可读 ${s.n_ok} 个：${names || "（无）"}`;
+  } catch (e) {
+    $("scanLine").textContent = "扫描失败。";
+    showError("扫描失败：\n" + e.message);
+  }
+}
+
+async function batchPreview() {
+  const root = $("bRoot").value.trim();
+  const text = $("bText").value.trim();
+  if (!root || !text) { showError("请先填批量根目录和一句需求"); return; }
+  showError("");
+  const btn = $("btnBatchPreview");
+  btn.disabled = true;
+  $("bStatusLine").textContent = "正在逐个试算（材料多时会慢一点，不要关窗口）…";
+  try {
+    const d = await api("/api/batch/preview", {method: "POST", body: JSON.stringify({
+      root, text, name: $("bName").value.trim(), ivdw: $("bIvdw").value.trim(),
+    })});
+    renderBatchLogs(d.batch.logs);
+    renderBatchTable(d.batch);
+    $("btnBatchWrite").disabled = d.batch.n_ok === 0;
+    $("bStatusLine").textContent = `预览完成：${d.batch.n_ok}/${d.batch.n_total} 项可写。检查上表路径与改动，没问题再点“全部写入”。`;
+  } catch (e) {
+    $("bStatusLine").textContent = "预览失败。";
+    $("btnBatchWrite").disabled = true;
+    showError("批量预览失败：\n" + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function batchWrite() {
+  if (!batchResult) { showError("请先预览"); return; }
+  const btn = $("btnBatchWrite");
+  btn.disabled = true;
+  $("bStatusLine").textContent = "正在写入…";
+  try {
+    const d = await api("/api/batch/write", {method: "POST", body: JSON.stringify({
+      id: batchResult.id, confirm: true,
+    })});
+    renderBatchLogs(d.batch.logs);
+    renderBatchTable(d.batch);
+    $("bStatusLine").textContent = `已写入 ${d.batch.written} 项；结果在 ${d.batch.batch_dir}（失败项见上表）。`;
+  } catch (e) {
+    $("bStatusLine").textContent = "写入失败。";
+    showError("批量写入失败：\n" + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$("btnPickBatchRoot").onclick = async () => {
+  try {
+    const d = await api("/api/browse?kind=source&initial=" +
+                        encodeURIComponent($("bRoot").value.trim()));
+    if (!d.cancelled && d.path) { $("bRoot").value = d.path; batchScan(); }
+  } catch (e) { showError("选择文件夹失败：\n" + e.message); }
+};
+$("btnScan").onclick = batchScan;
+$("btnBatchPreview").onclick = batchPreview;
+$("btnBatchWrite").onclick = batchWrite;
+
+// ---- 受限环境下用网页"看目录"（替代资源管理器） ----
+// 【为什么要这个】进程被沙箱降成 Low 完整性时，系统不允许它启动 explorer.exe；
+// 但读目录是允许的。于是把目录内容列在网页里：能看结果、能点进子目录、能复制路径去粘贴。
+function joinPath(base, name) {
+  const sep = base.includes("\\") ? "\\" : "/";
+  return base.replace(/[\\/]+$/, "") + sep + name;
+}
+
+async function showDir(path) {
+  const panel = $("dirPanel");
+  panel.hidden = false;
+  panel.innerHTML = '<div class="meta">读取目录…</div>';
+  try {
+    const d = await api("/api/ls?path=" + encodeURIComponent(path));
+    const rows = (d.items || []).map((it) => {
+      const name = it.dir
+        ? `<a href="#" data-dir="${encodeURIComponent(it.name)}">📁 ${it.name}</a>`
+        : `📄 ${it.name}`;
+      const size = it.dir ? "" : (it.size > 1024 ? Math.round(it.size / 1024) + " KB" : it.size + " B");
+      return `<tr><td>${name}</td><td>${size}</td><td>${it.mtime}</td></tr>`;
+    }).join("");
+    panel.innerHTML =
+      `<h2 style="margin-top:0">目录：<code>${d.path}</code></h2>` +
+      `<div class="row" style="margin:6px 0 10px">` +
+      `<button type="button" id="btnCopyPath">复制路径</button>` +
+      `<button type="button" id="btnDirUp">上一级</button>` +
+      `<button type="button" id="btnDirClose">收起</button></div>` +
+      `<table class="batch"><thead><tr><th>名称（文件夹可点）</th><th>大小</th><th>修改时间</th></tr></thead>` +
+      `<tbody>${rows || '<tr><td colspan="3" class="meta">空目录</td></tr>'}</tbody></table>`;
+    $("btnCopyPath").onclick = async () => {
+      try { await navigator.clipboard.writeText(d.path); $("openInfo").textContent = "已复制：" + d.path; }
+      catch (_) { $("openInfo").textContent = "路径：" + d.path; }
+    };
+    $("btnDirUp").onclick = () => showDir(d.parent);
+    $("btnDirClose").onclick = () => { panel.hidden = true; panel.innerHTML = ""; };
+    panel.querySelectorAll("a[data-dir]").forEach((a) => {
+      a.onclick = (ev) => {
+        ev.preventDefault();
+        showDir(joinPath(d.path, decodeURIComponent(a.dataset.dir)));
+      };
+    });
+  } catch (e) {
+    panel.innerHTML = `<div class="hint">读不了这个目录：${e.message}</div>`;
+  }
+}
+
+
+// ---- 数据库 ----
+// 【为什么下载按钮要带 provider/id】网页只知道“你点了哪一行”，
+// 重查一遍既慢又可能变；把 id 原样带回去，后端按 id 取那一条。
+async function dbSearch() {
+  const provider = $("dbProvider").value;
+  const formula = $("dbFormula").value.trim();
+  if (!formula) { showError("请先填化学式，例如 MoS2"); return; }
+  showError("");
+  const btn = $("btnDbSearch");
+  btn.disabled = true;
+  $("dbHint").textContent = "检索中…（OQMD 慢，可能要十几秒）";
+  try {
+    const d = await api("/api/db/search?provider=" + encodeURIComponent(provider) +
+                        "&formula=" + encodeURIComponent(formula) + "&limit=20");
+    renderDbResults(d.items);
+    $("dbHint").textContent = d.items.length ? `找到 ${d.items.length} 条。` :
+      "没有结果：换个化学式或换数据源；AFLOW/C2DB 走导入。";
+  } catch (e) {
+    $("dbHint").textContent = "检索失败。";
+    showError("检索失败：\n" + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderDbResults(items) {
+  if (!items || !items.length) {
+    $("dbResults").innerHTML = '<span class="meta">没有结果。</span>';
+    return;
+  }
+  const rows = items.map((it) => {
+    const canDownload = it.provider === "mp" || it.provider === "oqmd";
+    const action = canDownload
+      ? `<button type="button" data-dl="1" data-provider="${it.provider}" data-id="${it.id}" data-formula="${it.formula}">下载</button>`
+      : `<a href="${it.url || "#"}" target="_blank" rel="noreferrer">打开页面</a>`;
+    return `<tr><td>${it.provider}</td><td>${it.id}</td><td>${it.formula}</td>` +
+           `<td>${it.nsites || ""}</td><td>${action}</td></tr>`;
+  }).join("");
+  $("dbResults").innerHTML =
+    `<table class="batch"><thead><tr><th>库</th><th>ID</th><th>化学式</th>` +
+    `<th>原子数</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("dbResults").querySelectorAll("button[data-dl]").forEach((b) => {
+    b.onclick = () => dbDownload(b);
+  });
+}
+
+async function dbDownload(btn) {
+  btn.disabled = true;
+  btn.textContent = "下载中…";
+  try {
+    const d = await api("/api/db/download", {method: "POST", body: JSON.stringify({
+      provider: btn.dataset.provider, id: btn.dataset.id, formula: btn.dataset.formula,
+    })});
+    btn.textContent = "已下载";
+    $("dbHint").textContent = "已保存到：" + d.path + "（可直接作为批量根目录）";
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "下载";
+    showError("下载失败：\n" + e.message);
+  }
+}
+
+async function dbImport() {
+  const path = $("dbImportPath").value.trim();
+  if (!path) { showError("请先填要导入的文件或文件夹"); return; }
+  showError("");
+  $("dbImportHint").textContent = "导入中…";
+  try {
+    const d = await api("/api/db/import", {method: "POST", body: JSON.stringify({path})});
+    $("dbImportHint").textContent = `导入了 ${d.paths.length} 个：` +
+      d.paths.map((p) => p.split(/[\\/]/).pop()).join("、");
+  } catch (e) {
+    $("dbImportHint").textContent = "导入失败。";
+    showError("导入失败：\n" + e.message);
+  }
+}
+
+$("btnDbSearch").onclick = dbSearch;
+$("btnDbImport").onclick = dbImport;
+$("btnPickImport").onclick = async () => {
+  try {
+    const d = await api("/api/browse?kind=source&initial=" +
+                        encodeURIComponent($("dbImportPath").value.trim()));
+    if (!d.cancelled && d.path) { $("dbImportPath").value = d.path; }
+  } catch (e) { showError("选择文件夹失败：\n" + e.message); }
+};
+
+refreshStatus();
+</script>
+</body>
+</html>

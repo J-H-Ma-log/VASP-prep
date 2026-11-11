@@ -11,12 +11,25 @@
 
 ---
 
-## 0. 先看这两份文档
+## 0. 先看这几份文档
 
 | 文档 | 回答什么问题 |
 |---|---|
+| [`docs/架构与流程.md`](docs/架构与流程.md) | **代码怎么跑**：四层架构、主流程图、函数级调用链、出错看哪层 |
 | [`docs/网页使用.md`](docs/网页使用.md) | 怎么双击启动、界面每个控件干什么、模型怎么接、常见报错怎么办 |
-| [`docs/工作流.md`](docs/工作流.md) | 模型和工具各干什么、一次需求经过哪几步、五道闸门、出错看哪层、配置改哪里 |
+| [`docs/工作流.md`](docs/工作流.md) | 模型和工具各干什么、一次需求经过哪几步、五道闸门、配置改哪里 |
+| [`CHANGELOG.md`](CHANGELOG.md) | v1→v4 每一版做了什么、修了什么 |
+| [`docs/Git与PyCharm新手.md`](docs/Git与PyCharm新手.md) | 不会 git 也能用：存档/回退/标签/推到 Gitee，以及 PyCharm 配置 |
+
+统一入口（不用记模块名）：
+
+```bash
+python -m vasp_core webui      # 网页
+python -m vasp_core chat       # 终端
+python -m vasp_core batch -h   # 批量
+python -m vasp_core db -h      # 数据库
+```
+
 
 ---
 
@@ -39,10 +52,13 @@
 ```
 vasp-prep-v2/
 ├── 启动网页.bat              # 双击启动（自动找 chgnet_env，开浏览器）
+├── CHANGELOG.md              # v1→v4 版本历史
+├── .gitignore                # 运行产物不进版本库
 ├── webui_launcher.py         # 嵌入式 Python 的垫片（把项目根塞进 sys.path）
 ├── web/index.html            # 网页（单文件，无框架）
 ├── vasp-prep.toml            # 配置：路径 / 模型 / 端口 / 隐私档
 ├── vasp_core/
+│   ├── __main__.py           # 统一入口：python -m vasp_core webui|chat|prep|batch|db
 │   ├── errors.py             # 异常 + 退出码
 │   ├── poscar.py             # 读写 POSCAR + 15 个结构操作（无损）
 │   ├── incar.py              # 类型表、白名单、预设（含 none）、变更表、一致性
@@ -73,7 +89,7 @@ vasp-prep-v2/
 ├── materials/                # 数据库下载 / 导入的结构（运行时创建）
 ├── imports/                  # 手动导入区（选项，可完全不用）
 ├── cache/                    # 2Dmatpedia 等检索缓存（运行时创建）
-└── docs/                     # 网页使用.md、工作流.md、批量处理.md、数据库下载.md
+└── docs/                     # 架构与流程、网页使用、工作流、批量处理、数据库下载、Git与PyCharm新手
 ```
 
 ---

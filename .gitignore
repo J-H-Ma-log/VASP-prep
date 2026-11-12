@@ -12,6 +12,7 @@ cache/
 .tmp_service/
 .tmp_nl/
 .tmp_dialog/
+.tmp_build/
 
 # 日志 / 审计 / 诊断
 llm_trace.jsonl

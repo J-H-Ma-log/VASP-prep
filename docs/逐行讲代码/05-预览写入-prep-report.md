@@ -11,6 +11,41 @@
 
 > 约定：表格里"行"是文件真实行号；"代码"去掉了行首缩进，但标识符与原文完全一致。
 
+## 逻辑树（先看这张）
+
+> 预览和写入两条路，以及它们背后的 `prep.run`。向下 = 调用/数据流。
+
+```text
+网页 / 终端
+   │
+   ├─ service.preview(source, output, text)
+   │    ├─ summarize_source(src)        只读：POSCAR 摘要 + INCAR/KPOINTS 有无
+   │    ├─ compose_recipe(text, summary)
+   │    │    ├─ understand ──► 模型在线？──是──► llm.text_to_recipe（JSON）
+   │    │    │                    └─ 否/失败 ──► nl.text_to_recipe（规则）
+   │    │    ├─ _finalize_recipe         补 version/name/base_dir/structure
+   │    │    └─ _apply_calc_policy       calc/preset；用户没提 IVDW 就删掉
+   │    └─ stage_recipe(recipe, src, stage)
+   │         ├─ 写 stage/recipe.json
+   │         ├─ prep_run（临时舞台）──► stage/out/{POSCAR,INCAR,KPOINTS}
+   │         └─ 对 POSCAR/INCAR/KPOINTS 做 diff ──► Job.diffs
+   ▼
+service.write_job_obj(job)
+   ├─ _preflight_out：试建目录再删；失败给三条建议（换 runs / 换盘 / 别在受限沙箱里跑）
+   └─ prep_run（重跑一遍，不复制舞台）──► runs/<名称>/
+         ├─ POSCAR / INCAR / KPOINTS /（POTCAR、POTCAR.spec）
+         └─ INCAR.diff / change_report.md / 审计日志
+   ▼
+prep.run 内部
+   ├─ recipe.load_recipe（严格校验）──► read_poscar
+   ├─ recipe.apply_ops（结构操作）
+   ├─ build_incar（底稿 → 预设 → 覆盖 → 渲染）
+   ├─ POTCAR（skip / spec / auto）
+   ├─ KPOINTS（配方生成，或原样复制源目录）
+   ├─ check_kpoints + check_consistency → 有 ERROR 就抛 ValidationError
+   └─ 原子写盘：POSCAR → INCAR → KPOINTS → POTCAR → 报告
+```
+
 ---
 
 # 第一部分：service.py

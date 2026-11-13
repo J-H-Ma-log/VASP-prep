@@ -5,6 +5,36 @@
 > 2. 空行没有行为，不单独列表；连续多行注释、多行 docstring 会合并成一行，行号写成 `起–止`。
 > 3. "异常"一律指本函数主动 `raise` 的异常；参数形状不对导致的 `IndexError` 只在有调用价值时提一句。
 
+## 逻辑树（先看这张）
+
+> `poscar.py` 在整条链里的位置。向下 = 调用；主链路的唯一入口是 `recipe.apply_ops`（测试和 `tools/fuzz_poscar.py` 会直接调单个 `op_*`）。
+
+```text
+prep.run（读完配方与结构之后）
+   │
+   ├─ read_poscar ──► read_poscar_text
+   │                     ├─ 元素行重复？──► _regroup（species/坐标/flags/速度一起重排）
+   │                     └─ 原样保留 scale_raw / flags / velocities / tail（无损）
+   ▼
+recipe.apply_ops(before, recipe.ops)
+   │   逐个 op 顺序执行：上一步的输出 = 下一步的输入；任何一步抛错，原结构不变
+   │
+   ├─ op_supercell        元素先去重，再按 n1×n2×n3 铺原子
+   ├─ op_substitute       _check_indices（1 基）→ 换单个原子
+   ├─ op_substitute_all   按元素批量替换
+   ├─ op_vacancy          _check_indices → 删原子
+   ├─ op_add_atom         分数或笛卡尔坐标 → 追加一个原子（可带 flags）
+   ├─ op_strain           晶格左乘应变矩阵
+   ├─ op_vacuum           先量已有真空 gap；够大就不动，不足才加高
+   ├─ op_fix_atoms        _check_indices → 改 flags（T=可动，F=固定；"111" 归一成 "123"）
+   ├─ op_reorder_species  _regroup 按指定元素顺序重排
+   ├─ op_translate        整体平移（分数坐标直接加，笛卡尔先换算）
+   └─ op_wrap             分数坐标折回 [0,1)
+   ▼
+write_poscar_text(after)
+   └─ 速度块：只有 velocities 非空且行数 == 原子数才写（前面留一个空行）
+```
+
 ## 0. 这个文件为什么存在
 
 - 不用 ASE/pymatgen：目标机器是 RHEL6.5 + glibc2.12 且无外网（`poscar.py:4-10` 的模块注释），装 pymatgen/ASE 要几十个包，不少轮子还要求 glibc≥2.17；本文件只用标准库，保证"拷过去就能读/写 POSCAR"。

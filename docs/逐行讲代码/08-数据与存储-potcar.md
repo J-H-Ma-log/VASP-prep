@@ -2,6 +2,30 @@
 
 本文件只讲 `vasp_core\potcar.py`（202 行），即「扫描本地赝势库、按 POSCAR 元素顺序挑选 POTCAR、拼接、检查顺序」这一层。INCAR 与 KPOINTS 见 `04-INCAR与KPOINTS.md`。
 
+## 逻辑树（先看这张）
+
+> POTCAR 这条支线怎么被 `prep.run` 调用。向下 = 调用/数据流。
+
+```text
+prep.run（potcar_mode != skip，且解析到了赝势库目录）
+   ▼
+scan_library(pp_dir)
+   └─ 递归找 POTCAR ──► parse_potcar_header
+                         ├─ TITEL 只看前 60 行
+                         └─ ENMAX 在全文 20KB 内搜
+                         → Entry（元素 / 变体 / TITEL / ENMAX / 路径）
+   ▼
+choose(元素顺序, 库)
+   └─ 每个元素按 DEFAULT_PRIORITY 选一个变体；缺元素 → StructureError（退出码 4）
+   ▼
+check_order(POTCAR 顺序, POSCAR 元素顺序)   ← 顺序错是 VASP 的"沉默错误"
+   ▼
+concat(选中项) ──► POTCAR 文本（调用方负责写文件）
+total_enmax(选中项) ──► 给 ENCUT 一致性检查用
+   ▼
+prep.run 写 POTCAR + POTCAR.spec；--potcar-only 模式只做上面这四步
+```
+
 ## 0. potcar.py 在项目里的位置
 
 **谁调用它**：`vasp_core\prep.py`。主流程在 `prep.py:245-253` 依次调 `scan_library`、`choose`、`check_order`、`concat`；`prep.py:269-270` 用 `total_enmax` 给一致性检查提供 ENMAX；`prep.py:402-421` 的 `--potcar-only` 模式又走一遍同样的四步。`__init__.py:32` 把 `check_order, choose, concat, scan_library, spec_text` 再导出；`tests\test_core.py:398-419` 直接测这些函数。

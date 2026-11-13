@@ -2,6 +2,35 @@
 
 > 本文只讲 `vasp_core/incar.py`（562 行）与 `vasp_core/kpoints.py`（189 行）。行号以当前工作区文件为准；代码列去掉了行首缩进，标识符、运算符、字符串内容未改动。
 
+## 逻辑树（先看这张）
+
+> 两个文件都在 `prep.run` 里被调用。向下 = 调用/数据流。
+
+```text
+prep.run
+   │
+   ├─ INCAR 底稿：recipe.incar.base（相对 base_dir）或源目录 INCAR；都没有 → 空
+   ▼
+incar.build_incar(底稿, preset, overrides)
+   ├─ parse_incar          逐行拆成 Line（保留注释、空行、原始顺序）
+   ├─ PRESETS[preset]      relax / static / band / none
+   ├─ overrides 校验       DANGEROUS_KEYS → PolicyError（退出码 3）
+   │                       INCAR_TYPES 白名单 + 类型格式化（bool/int/float/str）
+   ├─ _merge_changes       同键后来居上，不写重复键
+   └─ render_incar         → INCAR 文本 + Change 列表 + Issue 列表
+   ▼
+kpoints.from_recipe(recipe["kpoints"])
+   ├─ gamma     → 1×1×1
+   ├─ mp        → 网格 + 位移（Monkhorst-Pack）
+   ├─ line      → 每段 from/to/points（各段 points 必须一致）
+   └─ explicit  → 直接给网格
+   ▼
+render_kpoints(kp) → KPOINTS 文本
+   ▼
+check_kpoints(...) + check_consistency(...)
+   └─ Issue 列表：ERROR 汇总后由 prep 抛 ValidationError（退出码 6），此时一个文件都不写
+```
+
 ## 0. 这两个文件在项目里的位置
 
 - `incar.py` 负责 INCAR：解析已有文件 → 套预设 → 应用用户覆盖 → 规范化/白名单/危险键检查 → 写回文本，最后做跨键一致性检查。它读的是 INCAR 文本，产出的是 INCAR 文本 + `Change` 变更列表 + `Issue` 问题列表。

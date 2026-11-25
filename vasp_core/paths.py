@@ -100,7 +100,7 @@ def cache_dir(cfg: Config | None = None) -> Path:
 def _as_root(value: str, default: str) -> Path:
     """把配置里的目录值解析成绝对路径。
 
-    【规则】相对路径一律相对项目根（vasp-prep-v2/），不相对"当前工作目录"——
+    【规则】相对路径一律相对项目根（vasp-prep/），不相对"当前工作目录"——
         否则从桌面双击启动和从命令行启动会落到两个地方。
     【允许】绝对路径（比如 D:\\vasp_runs）原样使用。
     """

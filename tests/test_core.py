@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """test_core.py —— 纯标准库 unittest，覆盖"改错会静默算错体系"的那些点。
 
@@ -12,7 +12,7 @@
     · MAGMOM 写成 Python 列表
     · KSPACING 与 KPOINTS 同时存在
 
-跑法（在 vasp-prep-v2 目录下）：
+跑法（在 vasp-prep 目录下）：
     python -m unittest discover -s tests -v
 """
 

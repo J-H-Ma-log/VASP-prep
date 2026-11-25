@@ -1,4 +1,4 @@
-# vasp-prep-v2
+# vasp-prep
 
 用一句中文改 VASP 的**前处理**输入（POSCAR / INCAR / KPOINTS）。本机运行，**不算能量、不碰 POTCAR、不改源文件**。
 
@@ -53,7 +53,7 @@ python -m vasp_core db -h      # 数据库
 ## 2. 目录结构
 
 ```
-vasp-prep-v2/
+vasp-prep/
 ├── 启动网页.bat              # 双击启动（自动找 chgnet_env，开浏览器）
 ├── CHANGELOG.md              # v1→v4 版本历史
 ├── .gitignore                # 运行产物不进版本库
@@ -102,7 +102,7 @@ vasp-prep-v2/
 无需安装任何东西，只要 Python ≥ 3.8：
 
 ```bash
-cd vasp-prep-v2
+cd vasp-prep
 python -m vasp_core.prep --help
 ```
 
@@ -203,7 +203,7 @@ python llm/nl2recipe.py "把第 3 个原子换成 Co，扩成 2x2x1" \
 
 ```bash
 # 1) 把整个目录拷上去
-scp -r vasp-prep-v2 user@ln01:~/
+scp -r vasp-prep user@ln01:~/
 
 # 2) 直接跑（不需要装包、不需要 pymatgen）
 ssh user@ln01
@@ -292,7 +292,7 @@ Windows/mac（有网、有界面）                    超算（Linux + VASP + T
 
 ```bash
 # 0) 一次性：把工具拷到超算（之后不再传）
-scp -r vasp-prep-v2 me@ln01:~/vasp-prep-v2
+scp -r vasp-prep me@ln01:~/vasp-prep-v2
 
 # 1) 本机生成（不写 POTCAR 内容，只写 POTCAR.spec）
 python -m vasp_core.prep recipes/cu.json --write --out runs/cu --potcar-mode spec
@@ -352,7 +352,7 @@ A 的关键设计是 **POTCAR 用"清单"传递**：本机只写 `POTCAR.spec`�
 双击 `启动网页.bat` → 浏览器自动打开 `http://127.0.0.1:8765`。
 
 界面四步：点**选择…**用系统资源管理器选**源目录**（也可直接粘贴路径）→
-填**输出名称**（结果固定写到 `vasp-prep-v2\runs\<名称>`；留空 = `<源目录名>_out`，同名自动加 `_2`）与写**一句中文** →
+填**输出名称**（结果固定写到 `vasp-prep\runs\<名称>`；留空 = `<源目录名>_out`，同名自动加 `_2`）与写**一句中文** →
 点**预览**看过程与 diff → 没问题点**写入**。
 
 产出（只写到 `runs\<名称>`，源目录不改）：
@@ -408,7 +408,7 @@ ollama list          # 确认模型名
 
 ### 13.2 换到另一台电脑（3 步）
 
-1. 拷整个 `vasp-prep-v2` 目录（含 `web/`、`docs/`、`vasp-prep.toml`）；
+1. 拷整个 `vasp-prep` 目录（含 `web/`、`docs/`、`vasp-prep.toml`）；
 2. 装 Python 3.10+；要做"切表面/加吸附质"再装 `pip install pymatgen ase`（或复制 `chgnet_env`）；
 3. 双击 `启动网页.bat`（它优先找 `../chgnet_env/python/python.exe`，找不到用系统 python）。
 

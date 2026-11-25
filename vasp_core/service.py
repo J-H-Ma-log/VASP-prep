@@ -472,7 +472,7 @@ def _preflight_out(out: Path) -> None:
     else:
         advice = ("     → 连用户目录都写不了（" + home_msg + "），几乎可以确定这个 Python 进程跑在\n"
                   "       受限沙箱里：只能写它自己的工作目录。请用 Win+R 输入 cmd，在普通命令行里\n"
-                  "       进到 vasp-prep-v2 再运行 启动网页.bat（不要从别的工具/终端里启动）。\n")
+                  "       进到 vasp-prep 再运行 启动网页.bat（不要从别的工具/终端里启动）。\n")
 
     raise PrepError(
         f"无法在下面这个位置建目录/写文件：\n  {parent}\n"

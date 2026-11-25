@@ -1,4 +1,4 @@
-# recipe 字段说明（vasp-prep-v2）
+# recipe 字段说明（vasp-prep）
 
 > **何时读**：要写/改一个 recipe、要确认某个 op 的参数名、或要判断 INCAR 覆盖键是否被允许时。
 > 目标读者是调用工具的模型和使用命令行的用户；字段名以 `vasp_core/recipe.py` 与

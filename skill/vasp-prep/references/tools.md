@@ -1,4 +1,4 @@
-# 工具参考（vasp-prep-v2 tools / MCP / agent）
+# 工具参考（vasp-prep tools / MCP / agent）
 
 > **何时读**：调用工具前查参数、判断副作用；接 MCP 客户端；排查 `ok=false` 的错误码。
 > 工具实现见 `vasp_core/tools.py`，MCP 服务见 `vasp_mcp/server.py`，
@@ -156,7 +156,7 @@ python -m vasp_mcp.server --selftest # 自测，成功退出 0
 {"mcpServers": {"vasp-prep": {
   "command": "D:\\Scientific Exploration Tools\\Python\\python.exe",
   "args": ["-m", "vasp_mcp.server"],
-  "cwd": "C:\\Users\\28476\\Desktop\\Deepseek Harness\\科研\\vasp-prep-v2"
+  "cwd": "C:\\Users\\28476\\Desktop\\Deepseek Harness\\科研\\vasp-prep"
 }}}
 ```
 

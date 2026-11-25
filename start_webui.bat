@@ -22,7 +22,7 @@ goto :eof
 :err
 echo.
 echo [ERROR] Failed to start. Please send the messages above to me.
-echo   - "No module named vasp_core": make sure this file is inside vasp-prep-v2
+echo   - "No module named vasp_core": make sure this file is inside vasp-prep
 echo   - port busy: edit [ui] port in vasp-prep.toml
 echo.
 pause

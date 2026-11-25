@@ -75,7 +75,7 @@
 
 - 场景：规则模式（不开模型）、MoS2 6 原子、需求"扩成 2x2x1，第 3 个原子换成 Co"、预览 + 写入。
 - 结果：耗时 0.182 s、行事件 10,831 次、不同行 922 行、函数调用 1,628 次。
-- 产物：`vasp-prep-v2\.tmp_build\trace_stats.json` 和 `trace_stats.md`（在 `.gitignore` 里，不进版本库）。
+- 产物：`vasp-prep\.tmp_build\trace_stats.json` 和 `trace_stats.md`（在 `.gitignore` 里，不进版本库）。
 - 复跑：
 
 ```powershell

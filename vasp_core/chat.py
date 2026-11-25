@@ -1,4 +1,4 @@
-﻿"""终端聊天入口：`python -m vasp_core.chat`。
+"""终端聊天入口：`python -m vasp_core.chat`。
 
 适合：SSH 登录、没有浏览器、或者想快速试一句话的时候。
 它和网页调的是同一个 service.py，所以行为完全一致——
@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
           f"体积 {info['volume']} Å³")
 
     src_name = Path(source).name or "run"
-    name = _ask("输出名称（结果写到 vasp-prep-v2\\runs\\<名称>，留空=" + src_name + "_out）", "")
+    name = _ask("输出名称（结果写到 vasp-prep\\runs\\<名称>，留空=" + src_name + "_out）", "")
     output = str((ROOT / cfg.paths.default_output / (name.strip() or f"{src_name}_out")).resolve())
 
     while True:

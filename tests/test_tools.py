@@ -25,7 +25,7 @@ import unittest
 import uuid
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]          # vasp-prep-v2
+ROOT = Path(__file__).resolve().parents[1]          # vasp-prep
 sys.path.insert(0, str(ROOT))                        # 让 `import vasp_core` 在仓库根下可用
 
 from vasp_core import tools as tools_mod  # noqa: E402

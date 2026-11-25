@@ -16,7 +16,7 @@
 ## 1. 已经给你建好的仓库
 
 ```
-位置：C:\Users\28476\Desktop\Deepseek Harness\科研\vasp-prep-v2
+位置：C:\Users\28476\Desktop\Deepseek Harness\科研\vasp-prep
 分支：main
 标签：v4.0.0（当前代码）
 ```
@@ -24,7 +24,7 @@
 第一次使用时，在 PowerShell 里：
 
 ```powershell
-cd "C:\Users\28476\Desktop\Deepseek Harness\科研\vasp-prep-v2"
+cd "C:\Users\28476\Desktop\Deepseek Harness\科研\vasp-prep"
 git log --oneline        # 看历史（现在只有 1~2 条）
 git status               # 看"有没有还没存的东西"
 git tag                  # 看有哪些版本名
@@ -133,11 +133,11 @@ git push origin --tags
 
 ### 7.1 打开项目
 
-`File → Open` → 选 `vasp-prep-v2` 文件夹（不是里面的 `vasp_core`）。
+`File → Open` → 选 `vasp-prep` 文件夹（不是里面的 `vasp_core`）。
 
 ### 7.2 配解释器（关键一步）
 
-`File → Settings → Project: vasp-prep-v2 → Python Interpreter → Add Interpreter → System Interpreter`
+`File → Settings → Project: vasp-prep → Python Interpreter → Add Interpreter → System Interpreter`
 
 | 用途 | 解释器路径 | 能力 |
 |---|---|---|
